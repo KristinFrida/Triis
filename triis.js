@@ -117,7 +117,7 @@ function newPiece() {
     };
 
     if (!validPosition(currentPiece.pos, currentPiece.rel)) {
-        alert("Game over!");
+        alert("Leik lokið");
         initWorld();
         score = 0;
         updateScore();
@@ -287,6 +287,25 @@ function addCube(ix, iy, iz, color) {
     quad(5, 4, 0, 1, color, x, y, z);
 }
 
+function addCubeEdges(ix, iy, iz, color) {
+    var x = ix - centerX;
+    var y = iy - centerY;
+    var z = iz - centerZ;
+
+    function edge(i, j) {
+        var v1 = cubeVertices[i];
+        var v2 = cubeVertices[j];
+        linePoints.push(vec4(v1[0] + x, v1[1] + y, v1[2] + z, 1.0));
+        linePoints.push(vec4(v2[0] + x, v2[1] + y, v2[2] + z, 1.0));
+        lineColors.push(color);
+        lineColors.push(color);
+    }
+
+    edge(0, 1); edge(1, 2); edge(2, 3); edge(3, 0);
+    edge(4, 5); edge(5, 6); edge(6, 7); edge(7, 4);
+    edge(0, 4); edge(1, 5); edge(2, 6); edge(3, 7);
+}
+
 function addFloor() {
     var floorColor = vec4(0.9, 0.9, 0.9, 1.0);
     var y = -1.0;
@@ -297,10 +316,43 @@ function addFloor() {
     }
 }
 
-function addBoxLines() {
-    linePoints = [];
-    lineColors = [];
+function addFloorLines() {
+    var cellMinX = -centerX - 0.5;
+    var cellMaxX = centerX + 0.5;
+    var cellMinZ = -centerZ - 0.5;
+    var cellMaxZ = centerZ + 0.5;
 
+    var floorWorldY = -1.0;
+    var floorY = floorWorldY - centerY + 0.51;
+
+    var c = vec4(0.0, 0.0, 0.0, 1.0);
+
+    function addLine(p1, p2) {
+        linePoints.push(p1);
+        linePoints.push(p2);
+        lineColors.push(c);
+        lineColors.push(c);
+    }
+
+    for (var i = 1; i < W; i++) {
+        var x = cellMinX + i;
+        addLine(
+            vec4(x, floorY, cellMinZ, 1.0),
+            vec4(x, floorY, cellMaxZ, 1.0)
+        );
+    }
+
+    for (var j = 1; j < D; j++) {
+        var z = cellMinZ + j;
+        addLine(
+            vec4(cellMinX, floorY, z, 1.0),
+            vec4(cellMaxX, floorY, z, 1.0)
+        );
+    }
+}
+
+
+function addBoxLines() {
     var minX = -centerX - 0.5;
     var maxX = centerX + 0.5;
     var minY = -centerY - 0.5;
@@ -309,7 +361,6 @@ function addBoxLines() {
     var maxZ = centerZ + 0.5;
 
     var boxColor = vec4(1.0, 1.0, 1.0, 0.3);
-    var floorLineColor = vec4(0.0, 0.0, 0.0, 1.0);
 
     function addLine(p1, p2, color) {
         linePoints.push(p1);
@@ -332,38 +383,16 @@ function addBoxLines() {
     addLine(vec4(maxX, minY, minZ, 1.0), vec4(maxX, maxY, minZ, 1.0), boxColor);
     addLine(vec4(maxX, minY, maxZ, 1.0), vec4(maxX, maxY, maxZ, 1.0), boxColor);
     addLine(vec4(minX, minY, maxZ, 1.0), vec4(minX, maxY, maxZ, 1.0), boxColor);
-
-    var cellMinX = -centerX - 0.5;
-    var cellMaxX = centerX + 0.5;
-    var cellMinZ = -centerZ - 0.5;
-    var cellMaxZ = centerZ + 0.5;
-    var floorY = -1.0 - centerY;
-
-    for (var i = 1; i < W; i++) {
-        var x = cellMinX + i;
-        addLine(
-            vec4(x, floorY, cellMinZ, 1.0),
-            vec4(x, floorY, cellMaxZ, 1.0),
-            floorLineColor
-        );
-    }
-
-    for (var j = 1; j < D; j++) {
-        var z = cellMinZ + j;
-        addLine(
-            vec4(cellMinX, floorY, z, 1.0),
-            vec4(cellMaxX, floorY, z, 1.0),
-            floorLineColor
-        );
-    }
 }
 
 function updateGeometry() {
     points = [];
     colors = [];
+    linePoints = [];
+    lineColors = [];
 
     var worldColor = vec4(0.2, 0.6, 1.0, 0.9);
-    var pieceColor = vec4(1.0, 0.8, 0.0, 0.9);
+    var pieceColor = vec4(1.0, 0.2, 0.6, 0.95);
 
     for (var x = 0; x < W; x++) {
         for (var y = 0; y < H; y++) {
@@ -382,12 +411,14 @@ function updateGeometry() {
             var wz = currentPiece.pos.z + currentPiece.rel[i].z;
             if (wx >= 0 && wx < W && wy >= 0 && wy < H && wz >= 0 && wz < D) {
                 addCube(wx, wy, wz, pieceColor);
+                addCubeEdges(wx, wy, wz, vec4(0.0, 0.0, 0.0, 1.0));
             }
         }
     }
 
     addFloor();
     addBoxLines();
+    addFloorLines();
 
     gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
     gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
@@ -440,6 +471,8 @@ function render(time) {
 
     gl.drawArrays(gl.TRIANGLES, 0, points.length);
 
+    gl.lineWidth(3.0);
+
     gl.bindBuffer(gl.ARRAY_BUFFER, lineBuffer);
     gl.vertexAttribPointer(vPositionLoc, 4, gl.FLOAT, false, 0, 0);
     gl.enableVertexAttribArray(vPositionLoc);
@@ -452,6 +485,7 @@ function render(time) {
 
     requestAnimFrame(render);
 }
+
 
 function initInput() {
     window.addEventListener("keydown", function (e) {
