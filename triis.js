@@ -12,9 +12,9 @@ var centerX = (W - 1) / 2.0;
 var centerY = (H - 1) / 2.0;
 var centerZ = (D - 1) / 2.0;
 
-var world = [];
+var universe = [];
 
-var currentPiece = null;
+var currentTetrisPiece = null;
 
 var dropInterval = 500;
 var lastDropTime = 0;
@@ -93,30 +93,30 @@ window.onload = function init() {
   );
   gl.uniformMatrix4fv(projectionMatrixLoc, false, flatten(projectionMatrix));
 
-  initWorld();
-  newPiece();
+  initUniverse();
+  newTetrisPiece();
   initInput();
 
   requestAnimFrame(render);
 };
 
-function initWorld() {
-  world = [];
+function initUniverse() {
+  universe = [];
   for (var x = 0; x < W; x++) {
-    world[x] = [];
+    universe[x] = [];
     for (var y = 0; y < H; y++) {
-      world[x][y] = [];
+      universe[x][y] = [];
       for (var z = 0; z < D; z++) {
-        world[x][y][z] = 0;
+        universe[x][y][z] = 0;
       }
     }
   }
 }
 
-function newPiece() {
+function newTetrisPiece() {
   var t = Math.random() < 0.5 ? 0 : 1;
   var rel;
-  var color;
+  var colour;
 
   if (t === 0) {
     rel = [
@@ -124,28 +124,28 @@ function newPiece() {
       { x: 0, y: -1, z: 0 },
       { x: 0, y: -2, z: 0 },
     ];
-    color = vec4(0.0, 0.9, 0.9, 0.95);
+    colour = vec4(0.0, 0.9, 0.9, 0.6);
   } else {
     rel = [
       { x: 0, y: 0, z: 0 },
       { x: 0, y: -1, z: 0 },
       { x: 1, y: -1, z: 0 },
     ];
-    color = vec4(1.0, 0.6, 0.2, 0.95);
+    colour = vec4(1.0, 0.6, 0.2, 0.6);
   }
 
-  currentPiece = {
+  currentTetrisPiece = {
     pos: { x: 2, y: H - 1, z: 2 },
     rel: rel,
-    color: color,
+    color: colour,
   };
 
-  if (!validPosition(currentPiece.pos, currentPiece.rel)) {
+  if (!validPosition(currentTetrisPiece.pos, currentTetrisPiece.rel)) {
     alert("Leik lokið");
-    initWorld();
+    initUniverse();
     score = 0;
-    updateScore();
-    newPiece();
+    updatePoints();
+    newTetrisPiece();
   }
 }
 
@@ -158,7 +158,7 @@ function validPosition(pos, rel) {
     if (wx < 0 || wx >= W || wy < 0 || wy >= H || wz < 0 || wz >= D) {
       return false;
     }
-    if (world[wx][wy][wz] === 1) {
+    if (universe[wx][wy][wz] === 1) {
       return false;
     }
   }
@@ -167,12 +167,12 @@ function validPosition(pos, rel) {
 
 function tryMove(dx, dy, dz) {
   var newPos = {
-    x: currentPiece.pos.x + dx,
-    y: currentPiece.pos.y + dy,
-    z: currentPiece.pos.z + dz,
+    x: currentTetrisPiece.pos.x + dx,
+    y: currentTetrisPiece.pos.y + dy,
+    z: currentTetrisPiece.pos.z + dz,
   };
-  if (validPosition(newPos, currentPiece.rel)) {
-    currentPiece.pos = newPos;
+  if (validPosition(newPos, currentTetrisPiece.rel)) {
+    currentTetrisPiece.pos = newPos;
     return true;
   }
   return false;
@@ -180,26 +180,26 @@ function tryMove(dx, dy, dz) {
 
 function moveDown() {
   if (!tryMove(0, -1, 0)) {
-    placePiece();
+    placeTetrisPiece();
     clearFullLayers();
-    newPiece();
+    newTetrisPiece();
   }
 }
 
 function hardDrop() {
   while (tryMove(0, -1, 0)) {}
-  placePiece();
+  placeTetrisPiece();
   clearFullLayers();
-  newPiece();
+  newTetrisPiece();
 }
 
-function placePiece() {
-  for (var i = 0; i < currentPiece.rel.length; i++) {
-    var wx = currentPiece.pos.x + currentPiece.rel[i].x;
-    var wy = currentPiece.pos.y + currentPiece.rel[i].y;
-    var wz = currentPiece.pos.z + currentPiece.rel[i].z;
+function placeTetrisPiece() {
+  for (var i = 0; i < currentTetrisPiece.rel.length; i++) {
+    var wx = currentTetrisPiece.pos.x + currentTetrisPiece.rel[i].x;
+    var wy = currentTetrisPiece.pos.y + currentTetrisPiece.rel[i].y;
+    var wz = currentTetrisPiece.pos.z + currentTetrisPiece.rel[i].z;
     if (wx >= 0 && wx < W && wy >= 0 && wy < H && wz >= 0 && wz < D) {
-      world[wx][wy][wz] = 1;
+      universe[wx][wy][wz] = 1;
     }
   }
 }
@@ -210,7 +210,7 @@ function clearFullLayers() {
     var full = true;
     for (var x = 0; x < W && full; x++) {
       for (var z = 0; z < D; z++) {
-        if (world[x][y][z] === 0) {
+        if (universe[x][y][z] === 0) {
           full = false;
           break;
         }
@@ -221,13 +221,13 @@ function clearFullLayers() {
       for (var yy = y; yy < H - 1; yy++) {
         for (var x2 = 0; x2 < W; x2++) {
           for (var z2 = 0; z2 < D; z2++) {
-            world[x2][yy][z2] = world[x2][yy + 1][z2];
+            universe[x2][yy][z2] = universe[x2][yy + 1][z2];
           }
         }
       }
       for (var x3 = 0; x3 < W; x3++) {
         for (var z3 = 0; z3 < D; z3++) {
-          world[x3][H - 1][z3] = 0;
+          universe[x3][H - 1][z3] = 0;
         }
       }
       y--;
@@ -236,11 +236,11 @@ function clearFullLayers() {
 
   if (cleared > 0) {
     score += cleared * 100;
-    updateScore();
+    updatePoints();
   }
 }
 
-function updateScore() {
+function updatePoints() {
   var el = document.getElementById("score");
   if (el) {
     el.innerHTML = "Stig: " + score;
@@ -272,22 +272,22 @@ function rotateVec(v, axis, dir) {
   }
 }
 
-function rotatePiece(axis, dir) {
+function rotateTetrisPiece(axis, dir) {
   var oldRel = [];
-  for (var i = 0; i < currentPiece.rel.length; i++) {
+  for (var i = 0; i < currentTetrisPiece.rel.length; i++) {
     oldRel.push({
-      x: currentPiece.rel[i].x,
-      y: currentPiece.rel[i].y,
-      z: currentPiece.rel[i].z,
+      x: currentTetrisPiece.rel[i].x,
+      y: currentTetrisPiece.rel[i].y,
+      z: currentTetrisPiece.rel[i].z,
     });
   }
 
-  for (var j = 0; j < currentPiece.rel.length; j++) {
-    currentPiece.rel[j] = rotateVec(currentPiece.rel[j], axis, dir);
+  for (var j = 0; j < currentTetrisPiece.rel.length; j++) {
+    currentTetrisPiece.rel[j] = rotateVec(currentTetrisPiece.rel[j], axis, dir);
   }
 
-  if (!validPosition(currentPiece.pos, currentPiece.rel)) {
-    currentPiece.rel = oldRel;
+  if (!validPosition(currentTetrisPiece.pos, currentTetrisPiece.rel)) {
+    currentTetrisPiece.rel = oldRel;
   }
 }
 
@@ -341,7 +341,7 @@ function addCubeEdges(ix, iy, iz, color) {
   edge(3, 7);
 }
 
-function addFloor() {
+function addBase() {
   var floorColor = vec4(0.9, 0.9, 0.9, 1.0);
   var y = -1.0;
   for (var x = 0; x < W; x++) {
@@ -351,14 +351,14 @@ function addFloor() {
   }
 }
 
-function addFloorLines() {
+function addBaseLines() {
   var cellMinX = -centerX - 0.5;
   var cellMaxX = centerX + 0.5;
   var cellMinZ = -centerZ - 0.5;
   var cellMaxZ = centerZ + 0.5;
 
-  var floorWorldY = -1.0;
-  var floorY = floorWorldY - centerY + 0.51;
+  var BaseUniverseY = -1.0;
+  var floorY = BaseUniverseY - centerY + 0.51;
 
   var c = vec4(0.0, 0.0, 0.0, 1.0);
 
@@ -419,25 +419,27 @@ function updateGeometry() {
   linePoints = [];
   lineColors = [];
 
-  var worldColor = vec4(0.2, 0.6, 1.0, 0.9);
+  var universeColor = vec4(0.6, 0.3, 1.0, 0.9);
   var defaultPieceColor = vec4(1.0, 0.2, 0.6, 0.95);
-  var pieceColor = currentPiece ? currentPiece.color : defaultPieceColor;
+  var pieceColor = currentTetrisPiece
+    ? currentTetrisPiece.color
+    : defaultPieceColor;
 
   for (var x = 0; x < W; x++) {
     for (var y = 0; y < H; y++) {
       for (var z = 0; z < D; z++) {
-        if (world[x][y][z] === 1) {
-          addCube(x, y, z, worldColor);
+        if (universe[x][y][z] === 1) {
+          addCube(x, y, z, universeColor);
         }
       }
     }
   }
 
-  if (currentPiece) {
-    for (var i = 0; i < currentPiece.rel.length; i++) {
-      var wx = currentPiece.pos.x + currentPiece.rel[i].x;
-      var wy = currentPiece.pos.y + currentPiece.rel[i].y;
-      var wz = currentPiece.pos.z + currentPiece.rel[i].z;
+  if (currentTetrisPiece) {
+    for (var i = 0; i < currentTetrisPiece.rel.length; i++) {
+      var wx = currentTetrisPiece.pos.x + currentTetrisPiece.rel[i].x;
+      var wy = currentTetrisPiece.pos.y + currentTetrisPiece.rel[i].y;
+      var wz = currentTetrisPiece.pos.z + currentTetrisPiece.rel[i].z;
       if (wx >= 0 && wx < W && wy >= 0 && wy < H && wz >= 0 && wz < D) {
         addCube(wx, wy, wz, pieceColor);
         addCubeEdges(wx, wy, wz, vec4(0.0, 0.0, 0.0, 1.0));
@@ -445,9 +447,9 @@ function updateGeometry() {
     }
   }
 
-  addFloor();
+  addBase();
   addBoxLines();
-  addFloorLines();
+  addBaseLines();
 
   gl.bindBuffer(gl.ARRAY_BUFFER, vBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, flatten(points), gl.STATIC_DRAW);
@@ -537,27 +539,27 @@ function initInput() {
         break;
       case "a":
       case "A":
-        rotatePiece("x", 1);
+        rotateTetrisPiece("x", 1);
         break;
       case "z":
       case "Z":
-        rotatePiece("x", -1);
+        rotateTetrisPiece("x", -1);
         break;
       case "s":
       case "S":
-        rotatePiece("y", 1);
+        rotateTetrisPiece("y", 1);
         break;
       case "x":
       case "X":
-        rotatePiece("y", -1);
+        rotateTetrisPiece("y", -1);
         break;
       case "d":
       case "D":
-        rotatePiece("z", 1);
+        rotateTetrisPiece("z", 1);
         break;
       case "c":
       case "C":
-        rotatePiece("z", -1);
+        rotateTetrisPiece("z", -1);
         break;
       default:
         if (k === " " || e.code === "Space") {
