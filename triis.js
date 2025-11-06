@@ -423,8 +423,8 @@ function updateGeometry() {
   linePoints = [];
   lineColors = [];
 
-  var settledColor1 = vec4(0.0, 0.5, 0.5, 0.9);
-  var settledColor2 = vec4(0.7, 0.3, 0.0, 0.9);
+  var settledColor1 = vec4(0.0, 0.5, 0.5, 0.8);
+  var settledColor2 = vec4(0.7, 0.3, 0.0, 0.8);
   var defaultPieceColor = vec4(1.0, 0.2, 0.6, 0.95);
   var pieceColor = currentTetrisPiece
     ? currentTetrisPiece.color
@@ -435,8 +435,10 @@ function updateGeometry() {
       for (var z = 0; z < D; z++) {
         if (universe[x][y][z] === 1) {
           addCube(x, y, z, settledColor1);
+          addCubeEdges(x, y, z, vec4(0.0, 0.0, 0.0, 1.0));
         } else if (universe[x][y][z] === 2) {
           addCube(x, y, z, settledColor2);
+          addCubeEdges(x, y, z, vec4(0.0, 0.0, 0.0, 1.0));
         }
       }
     }
