@@ -117,6 +117,7 @@ function newTetrisPiece() {
   var t = Math.random() < 0.5 ? 0 : 1;
   var rel;
   var colour;
+  var pieceType;
 
   if (t === 0) {
     rel = [
@@ -124,20 +125,23 @@ function newTetrisPiece() {
       { x: 0, y: -1, z: 0 },
       { x: 0, y: -2, z: 0 },
     ];
-    colour = vec4(0.0, 0.9, 0.9, 0.6);
+    colour = vec4(0.0, 0.9, 0.9, 0.2);
+    pieceType = 1;
   } else {
     rel = [
       { x: 0, y: 0, z: 0 },
       { x: 0, y: -1, z: 0 },
       { x: 1, y: -1, z: 0 },
     ];
-    colour = vec4(1.0, 0.6, 0.2, 0.6);
+    colour = vec4(1.0, 0.6, 0.2, 0.2);
+    pieceType = 2;
   }
 
   currentTetrisPiece = {
     pos: { x: 2, y: H - 1, z: 2 },
     rel: rel,
     color: colour,
+    type: pieceType,
   };
 
   if (!validPosition(currentTetrisPiece.pos, currentTetrisPiece.rel)) {
@@ -158,7 +162,7 @@ function validPosition(pos, rel) {
     if (wx < 0 || wx >= W || wy < 0 || wy >= H || wz < 0 || wz >= D) {
       return false;
     }
-    if (universe[wx][wy][wz] === 1) {
+    if (universe[wx][wy][wz] !== 0) {
       return false;
     }
   }
@@ -199,7 +203,7 @@ function placeTetrisPiece() {
     var wy = currentTetrisPiece.pos.y + currentTetrisPiece.rel[i].y;
     var wz = currentTetrisPiece.pos.z + currentTetrisPiece.rel[i].z;
     if (wx >= 0 && wx < W && wy >= 0 && wy < H && wz >= 0 && wz < D) {
-      universe[wx][wy][wz] = 1;
+      universe[wx][wy][wz] = currentTetrisPiece.type;
     }
   }
 }
@@ -419,7 +423,8 @@ function updateGeometry() {
   linePoints = [];
   lineColors = [];
 
-  var universeColor = vec4(0.6, 0.3, 1.0, 0.9);
+  var settledColor1 = vec4(0.0, 0.5, 0.5, 0.9);
+  var settledColor2 = vec4(0.7, 0.3, 0.0, 0.9);
   var defaultPieceColor = vec4(1.0, 0.2, 0.6, 0.95);
   var pieceColor = currentTetrisPiece
     ? currentTetrisPiece.color
@@ -429,7 +434,9 @@ function updateGeometry() {
     for (var y = 0; y < H; y++) {
       for (var z = 0; z < D; z++) {
         if (universe[x][y][z] === 1) {
-          addCube(x, y, z, universeColor);
+          addCube(x, y, z, settledColor1);
+        } else if (universe[x][y][z] === 2) {
+          addCube(x, y, z, settledColor2);
         }
       }
     }
