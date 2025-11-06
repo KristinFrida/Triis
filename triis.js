@@ -243,7 +243,7 @@ function clearFullLayers() {
 function updatePoints() {
   var el = document.getElementById("score");
   if (el) {
-    el.innerHTML = "Stig: " + score;
+    el.innerHTML = "Stigagjöf: " + score;
   }
 }
 
